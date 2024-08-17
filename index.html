@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+    <style>
+        .alert-banner {
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: #ff0015; /* Red background for alert */
+            color: #721c24; /* Dark red text color */
+            padding: 15px;
+            text-align: center;
+            z-index: 1000; /* Make sure it's on top of other content */
+            font-family: Arial, sans-serif;
+            border-bottom: 2px solid #f5c6cb;
+        }
+
+        .alert-banner button {
+            background: none;
+            border: none;
+            color: #721c24;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 0 10px;
+        }
+
+        .alert-banner button:hover {
+            color: #495057;
+        }
+    </style>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Page</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="alert-banner" id="alertBanner">
+        <span id="alertMessage">This is an alert banner!</span>
+        <button onclick="alertBanner.style.display = 'none';">Close</button>
+    </div>
+    <div class="header">
+        <div class="logo">
+            <h1 style="font-family: 'Times New Roman', Times, serif;">CRISIS CONNECT</h1>
+        </div>
+    </div>
+    <nav>
+        <ul>
+            <li><a href="login.html">Login</a></li>
+            <li><a href="abouts.html">About</a></li>
+        </ul>
+    </nav>
+    </header>
+
+    <main>
+
+        <div id="alert_section">
+            <section class="cta">
+
+                <button class="cta-button" id="help_btn">HELP US!</button>
+            </section>
+        </div>
+        <section class="main-content" id="card-section">
+
+        </section>
+        <h3><B>PAST INCIDENTS</B></h3>
+        <section class="history">
+
+            <div class="card2">
+                <img src="landslide.jpeg" alt="">
+                <div id="opt">
+                    <p id="heading"><B>FLOOD</B></p>
+                    <p id="location">Location:Chengannur</p>
+                    <button style="width: 100px;">more details</button>
+                </div>
+            </div>
+
+            <div class="card2">
+                <img src="landslide.jpeg" alt="">
+                <div id="opt">
+                    <p id="heading"><B>LANDSLIDE</B></p>
+                    <p id="location">Location: Idukki</p>
+                    <button style="width: 100px;">more details</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
+        import { getDatabase, set, ref, child, update, remove, push, get, onChildAdded, onChildChanged, onValue } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
+        const firebaseConfig = {
+            apiKey: "AIzaSyDE-wa5E-MToEWgcJlSb2sl6LI1X8aAzCM",
+            authDomain: "verdant-market-392401.firebaseapp.com",
+            databaseURL: "https://verdant-market-392401-default-rtdb.firebaseio.com",
+            projectId: "verdant-market-392401",
+            storageBucket: "verdant-market-392401.appspot.com",
+            messagingSenderId: "359504785858",
+            appId: "1:359504785858:web:aa9858e4c4a6d7df80a65b",
+            measurementId: "G-DCZF9WFTP2"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        var db = getDatabase();
+        const dbref = ref(db);
+        console.log(dbref)
+
+        // Check if Geolocation API is supported
+        document.getElementById("help_btn").addEventListener("click", () => {
+            if (navigator.geolocation) {
+                // Get the current position
+                navigator.geolocation.getCurrentPosition(successCallback, errorCallback);
+            } else {
+                console.log('Geolocation is not supported by this browser.');
+            }
+        })
+
+
+
+
+        // Success callback
+        function successCallback(position) {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+
+            console.log(`Latitude: ${latitude}`);
+            console.log(`Longitude: ${longitude}`);
+            getcity(latitude, longitude)
+        }
+
+        // Error callback
+        function errorCallback(error) {
+            console.error(`Error occurred: ${error.message}`);
+        }
+        async function getcity(lat, lon) {
+            const latitude = lat
+            const longitude = lon
+            const apiKey = 'a8c7b59d7dmsh5bf526b60781bc0p129d41jsn978a001931f7';
+
+            const url = `https://weatherbit-v1-mashape.p.rapidapi.com/forecast/3hourly?lat=${latitude}&lon=${longitude}&units=imperial&lang=en`;
+            const options = {
+                method: 'GET',
+                headers: {
+                    'x-rapidapi-key': apiKey,
+                    'x-rapidapi-host': 'weatherbit-v1-mashape.p.rapidapi.com'
+                }
+            };
+
+            try {
+                const response = await fetch(url, options);
+                const result = await response.json(); // Parse the response as JSON
+
+                console.log(result); // Log the full response for debugging purposes
+
+                // Extract and display the city name
+                if (result && result.city_name) {
+                    console.log(`City: ${result.city_name}`);
+                    set(ref(db, "alert"),
+                        {
+                            location: result.city_name
+
+                        })
+                } else {
+                    console.log('City name not found in the response.');
+                }
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
+        }
+        const dbRef = ref(db, 'alert/location');
+        let initialLoad = true;
+
+        // Detect changes in the Realtime Database, avoiding the initial trigger
+        onValue(dbRef, (snapshot) => {
+            if (initialLoad) {
+                initialLoad = false; // Skip the first trigger
+                return;
+            }
+
+            const data = snapshot.val();
+            console.log('Data changed:', data);
+            
+            // Handle the updated data here
+        });
+
+
+
+
+        // Array of objects containing the card details
+        // Array of objects containing the card details
+
+
+        // Reference to the section where cards will be appended
+        const cardSection = document.getElementById('card-section');
+
+        // Function to create and append cards
+        function createCards(cards) {
+            cards.forEach(card => {
+                // Create card container
+                const cardDiv = document.createElement('div');
+                cardDiv.classList.add('card');
+
+                // Create and append image
+                const img = document.createElement('img');
+                img.src = card.imgSrc;
+                img.alt = card.heading;
+                cardDiv.appendChild(img);
+
+                // Create options div
+                const optDiv = document.createElement('div');
+                optDiv.id = 'opt';
+
+                // Create and append heading
+                const headingP = document.createElement('p');
+                headingP.id = 'heading';
+                headingP.innerHTML = `<b>${card.heading}</b>`;
+                optDiv.appendChild(headingP);
+
+                // Create and append location
+                const locationP = document.createElement('p');
+                locationP.id = 'location';
+                locationP.textContent = `Location: ${card.location}`;
+                optDiv.appendChild(locationP);
+
+                // Create and append button with link
+                const link = document.createElement('a');
+                link.href = "needs.html";
+
+                const button = document.createElement('button');
+                button.style.width = '50px';
+                button.textContent = 'Help!';
+                button.setAttribute("id", "btn")
+                link.appendChild(button);
+               
+                optDiv.appendChild(link);
+
+                // Append options div to card container
+                cardDiv.appendChild(optDiv);
+
+                // Append card to section
+                cardSection.appendChild(cardDiv);
+
+            });
+            document.getElementById("btn").addEventListener("click", () => {
+                    sessionStorage.setItem("disaster", document.getElementById("heading").innerText)
+                    sessionStorage.setItem("location", document.getElementById("location").innerText)
+                })
+        }
+
+        // Call the function to create cards
+
+
+        function readAlertsFromDatabase() {
+            const alertsRef = ref(db, 'disaster'); // Reference to the 'alerts' node in the database
+            onValue(alertsRef, (snapshot) => {
+                const alertsArray = [];
+                snapshot.forEach((childSnapshot) => {
+                    const data = childSnapshot.val();
+                    alertsArray.push({
+                        id: childSnapshot.key,
+                        imgSrc: "landslide.jpeg",
+                        heading: data.disaster,
+                        location: data.location,
+                        link: data.link
+                    });
+                });
+                // updateAlertsDisplay(alertsArray);
+                console.log(alertsArray)
+                createCards(alertsArray);
+            });
+        }
+
+        function showAlertBanner(message) {
+            alertMessage.textContent = message;
+            alertBanner.style.display = 'block';
+        }
+
+        function hideAlertBanner() {
+            alertBanner.style.display = 'none';
+        }
+        // updateAlertsDisplay(alertsArray);
+        const Ref = ref(db, 'alert/location');
+        let initialLoa = true;
+
+        // Detect changes in the Realtime Database, avoiding the initial trigger
+        onValue(Ref, (snapshot) => {
+            if (initialLoa) {
+                initialLoa = false; // Skip the first trigger
+                return;
+            }
+
+            const data = snapshot.val();
+            console.log('Data changed:', data);
+            showAlertBanner("New Disaster Alert")
+             
+            // Handle the updated data here
+        });
+        readAlertsFromDatabase();
+    </script>
+</body>
+
+</html>

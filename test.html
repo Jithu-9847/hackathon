@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Storage and PDF Viewer</title>
+    <script src="https://www.gstatic.com/firebasejs/9.1.2/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.2/firebase-storage.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+</head>
+<body>
+    <div id="files"></div>
+    <div id="pdf-container" style="width: 100%; height: 600px;"></div>
+    
+    <script>
+        // Your Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDE-wa5E-MToEWgcJlSb2sl6LI1X8aAzCM",
+            authDomain: "verdant-market-392401.firebaseapp.com",
+            databaseURL: "https://verdant-market-392401-default-rtdb.firebaseio.com",
+            projectId: "verdant-market-392401",
+            storageBucket: "verdant-market-392401.appspot.com",
+            messagingSenderId: "359504785858",
+            appId: "1:359504785858:web:aa9858e4c4a6d7df80a65b",
+            measurementId: "G-DCZF9WFTP2"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const storageRef = firebase.storage().ref();
+        let data = [];
+        const code = sessionStorage.getItem("code");
+
+        window.onload = () => {
+            readData(`${code}/notes`, 'notes');
+        };
+
+        function createTile(tileData, type, index) {
+            // Create tile element
+            const tile = document.createElement('div');
+            tile.classList.add('tile');
+
+            // Create text element
+            const tileText = document.createElement('p');
+            tileText.textContent = tileData.name;
+
+            // Create button element
+            const button = document.createElement('button');
+            button.textContent = "Open File";
+            button.addEventListener('click', function () {
+                retrievePDF(`${code}/${type}/${data[index]}`);
+            });
+
+            // Append text and button to tile
+            tile.appendChild(tileText);
+            tile.appendChild(button);
+
+            // Append tile to container
+            document.getElementById('files').appendChild(tile);
+        }
+
+        function readData(path, type) {
+            const folderRef = storageRef.child(path);
+
+            // List all items in the folder
+            folderRef.listAll().then(function (result) {
+                document.getElementById("files").innerHTML = "";
+                data = [];
+
+                result.items.forEach(function (itemRef, index) {
+                    data.push(itemRef.name);
+                    createTile(itemRef, type, index);
+                });
+
+                if (data.length === 0) {
+                    const message = document.createElement("p");
+                    message.textContent = "There are no files to show you. If you have any documents you'd like to upload, please feel free to do so.";
+                    document.getElementById("files").appendChild(message);
+                }
+
+            }).catch(function (error) {
+                alert("Something went wrong! Try again.");
+                console.error(error);
+            });
+        }
+
+        function retrievePDF(path) {
+            viewPDF(path);
+        }
+
+        async function viewPDF(path) {
+            const pdfRef = storageRef.child(path);
+
+            try {
+                const url = await pdfRef.getDownloadURL();
+                displayPDF(url);
+            } catch (error) {
+                console.error("Error getting PDF URL", error);
+            }
+        }
+
+        function displayPDF(url) {
+            const pdfViewer = document.getElementById('pdf-container');
+            pdfViewer.innerHTML = ''; // Clear previous content
+
+            pdfjsLib.getDocument(url).promise.then(pdf => {
+                pdf.getPage(1).then(page => {
+                    const scale = 1.5;
+                    const viewport = page.getViewport({ scale: scale });
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+
+                    // Render the page
+                    const renderContext = {
+                        canvasContext: context,
+                        viewport: viewport
+                    };
+                    page.render(renderContext);
+
+                    pdfViewer.appendChild(canvas);
+                });
+            }).catch(error => {
+                console.error("Error rendering PDF", error);
+            });
+        }
+    </script>
+</body>
+</html>

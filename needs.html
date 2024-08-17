@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Needs Page</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+    <header>
+        <h1>Needs</h1>
+    </header>
+
+    <main>
+        <section class="main-section">
+            <div class="image-area">
+                <img src="flood.jpeg" alt="Placeholder Image">
+            </div>
+           
+            <div class="container">
+                <div class="sidebar">
+                    <h2 id="head"></h2>
+                    <div class="list-item">
+<p id="loc"></p>                        
+                    </div>
+                    <div class="list-item">
+                        <span>Volunteers</span>
+                        <button>Interested</button>
+                    </div>
+                    <div class="list-item">
+                        <span>Food</span>
+                        <button>Help!</button>
+                    </div>
+                    <div class="list-item">
+                        <span>Water</span>
+                        <button>Help!</button>
+                    </div>
+                    <div class="list-item">
+                        <span>Medical Aids</span>
+                        <button>Help!</button>
+                    </div>
+                </div>
+            </div>
+            
+            
+        </section>
+    </main>
+    <script>
+        document.getElementById("head").innerText=sessionStorage.getItem("disaster")
+        document.getElementById("loc").innerText=sessionStorage.getItem("location")
+    </script>
+</body>
+</html>

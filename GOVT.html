@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gov Home Alerts</title>
+    <link rel="stylesheet" href="GOV.css">
+    <style>
+        .alert-banner {
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: #ff0015; /* Red background for alert */
+            color: #721c24; /* Dark red text color */
+            padding: 15px;
+            text-align: center;
+            z-index: 1000; /* Make sure it's on top of other content */
+            font-family: Arial, sans-serif;
+            border-bottom: 2px solid #f5c6cb;
+        }
+
+        .alert-banner button {
+            background: none;
+            border: none;
+            color: #721c24;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 0 10px;
+        }
+
+        .alert-banner button:hover {
+            color: #495057;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Gov Home - Alerts</h1>
+    </header>
+
+    <main>
+       
+        <section class="alerts-section">
+            <div class="alert-message">
+                <h2>Alerts!</h2>
+                <p id="alert_ms"> </p>
+            </div>
+
+            <div class="alert-banner" id="alertBanner">
+                <span id="alertMessage">This is an alert banner!</span>
+                <button onclick="alertBanner.style.display = 'none';">Close</button>
+            </div>
+            
+            <div class="alert-all">
+                <h1>Alert everyone about the disaster</h1>
+                <h4>Location:</h4>
+                <input type="text" id="location"><br>
+                <h4>Disaster:</h4>
+                <input type="text" id="Disaster"><br>
+                <br>
+                <button id="alertButton">Alert All</button>
+            </div>
+        </section>
+    </main>
+
+    <script type="module">
+        // Import Firebase functions
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
+        import { getDatabase, ref, push ,set,onValue } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDE-wa5E-MToEWgcJlSb2sl6LI1X8aAzCM",
+            authDomain: "verdant-market-392401.firebaseapp.com",
+            databaseURL: "https://verdant-market-392401-default-rtdb.firebaseio.com",
+            projectId: "verdant-market-392401",
+            storageBucket: "verdant-market-392401.appspot.com",
+            messagingSenderId: "359504785858",
+            appId: "1:359504785858:web:aa9858e4c4a6d7df80a65b",
+            measurementId: "G-DCZF9WFTP2"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // References to HTML elements
+        const locationInput = document.getElementById('location');
+        const disasterInput = document.getElementById('Disaster');
+        const alertButton = document.getElementById('alertButton');
+
+        // Function to add data to Firebase Realtime Database
+        function addAlertToDatabase(location, disaster) {
+            const alertsRef = ref(db, 'alerts'); // Reference to the 'alerts' node in the database
+            const newAlertRef = push(alertsRef);
+            set(ref(db, "disaster/"+location+disaster),
+                {
+                    location: location,
+                    disaster: disaster,
+                    timestamp: new Date().toISOString()
+
+                })
+
+                .then(() => {
+                    console.log("Alert added successfully!");
+                })
+                .catch((error) => {
+                    console.error("Error adding alert: ", error);
+                });
+        }
+
+        // Event listener for the "Alert All" button
+        alertButton.addEventListener('click', () => {
+            const location = locationInput.value;
+            const disaster = disasterInput.value;
+            if (location && disaster) {
+                addAlertToDatabase(location, disaster);
+            } else {
+                alert("Please enter both location and disaster details.");
+            }
+        });
+
+        const alertsRef = ref(db, 'alert'); // Reference to the 'alerts' node in the database
+            onValue(alertsRef, (snapshot) => {
+                
+                const alertsArray = [];
+                snapshot.forEach((childSnapshot) => {
+
+                    const data = childSnapshot.val();
+                  
+                    alertsArray.push({
+                        
+                        location: data,
+                         
+                    });
+                });
+                // updateAlertsDisplay(alertsArray);
+                console.log(alertsArray)
+                document.getElementById("alert_ms").innerText=`A Disaster occured on the location:${alertsArray[0].location}`
+                
+            });
+            function showAlertBanner(message) {
+            alertMessage.textContent = message;
+            alertBanner.style.display = 'block';
+        }
+
+        function hideAlertBanner() {
+            alertBanner.style.display = 'none';
+        }
+
+        const dbRef = ref(db, 'alert/location');
+        let initialLoad = true;
+
+        // Detect changes in the Realtime Database, avoiding the initial trigger
+        onValue(dbRef, (snapshot) => {
+            if (initialLoad) {
+                initialLoad = false; // Skip the first trigger
+                return;
+            }
+
+            const data = snapshot.val();
+            console.log('Data changed:', data);
+            showAlertBanner("New Disaster Alert")
+            alert(data)
+            // Handle the updated data here
+        });
+    </script>
+</body>
+
+</html>
